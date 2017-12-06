@@ -59,14 +59,11 @@ class LambdaExpressionElementType extends IErrorCounterReparseableElementType {
     }
 
     private static boolean wasArrowMovedOrDeleted(@Nullable ASTNode parent, CharSequence buffer) {
-        if (parent == null) return false;
+        KtLambdaExpression lambdaExpression = findOldLambdaExpression(parent);
+        if (lambdaExpression == null) {
+            return false;
+        }
 
-        PsiElement parentPsi = parent.getPsi();
-        KtLambdaExpression[] lambdaExpressions = PsiTreeUtil.getChildrenOfType(parentPsi, KtLambdaExpression.class);
-        if (lambdaExpressions == null || lambdaExpressions.length != 1) return false;
-
-        // Now works only when actual node can be spotted ambiguously. Need change in API.
-        KtLambdaExpression lambdaExpression = lambdaExpressions[0];
         KtFunctionLiteral literal = lambdaExpression.getFunctionLiteral();
         PsiElement arrow = literal.getArrow();
 
@@ -75,8 +72,23 @@ class LambdaExpressionElementType extends IErrorCounterReparseableElementType {
 
         int arrowOffset = arrow.getStartOffsetInParent() + literal.getStartOffsetInParent();
 
+        return hasTokenMoved(lambdaExpression.getText(), buffer, arrowOffset, KtTokens.ARROW);
+    }
+
+    private static KtLambdaExpression findOldLambdaExpression(@Nullable ASTNode parent) {
+        if (parent == null) return null;
+
+        PsiElement parentPsi = parent.getPsi();
+        KtLambdaExpression[] lambdaExpressions = PsiTreeUtil.getChildrenOfType(parentPsi, KtLambdaExpression.class);
+        if (lambdaExpressions == null || lambdaExpressions.length != 1) return null;
+
+        // Now works only when actual node can be spotted ambiguously. Need change in API.
+        return lambdaExpressions[0];
+    }
+
+    private static boolean hasTokenMoved(String oldText, CharSequence buffer, int oldOffset, IElementType tokenType) {
         Lexer oldLexer = new KotlinLexer();
-        oldLexer.start(lambdaExpression.getText());
+        oldLexer.start(oldText);
 
         Lexer newLexer = new KotlinLexer();
         newLexer.start(buffer);
@@ -101,7 +113,7 @@ class LambdaExpressionElementType extends IErrorCounterReparseableElementType {
                 return true; // Arrow was moved or deleted
             }
 
-            if (oldType == KtTokens.ARROW && oldLexer.getCurrentPosition().getOffset() == arrowOffset) {
+            if (oldType == tokenType && oldLexer.getCurrentPosition().getOffset() == oldOffset) {
                 break;
             }
 
