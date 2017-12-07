@@ -95,7 +95,7 @@ private class SamAdapterFunctionsScope(
         companion object {
             fun create(sourceFunction: FunctionDescriptor, samResolver: SamConversionResolver): MyFunctionDescriptor {
                 val descriptor = MyFunctionDescriptor(sourceFunction.containingDeclaration,
-                                                      null,
+                                                      if (sourceFunction === sourceFunction.original) null else create(sourceFunction.original, samResolver),
                                                       sourceFunction.annotations,
                                                       sourceFunction.name,
                                                       CallableMemberDescriptor.Kind.SYNTHESIZED,
