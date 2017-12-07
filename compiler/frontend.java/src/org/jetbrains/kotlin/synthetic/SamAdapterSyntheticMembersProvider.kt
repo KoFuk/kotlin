@@ -56,8 +56,7 @@ private class SamAdapterFunctionsScope(
 
     private fun doGetFunctions(name: Name) =
             super.getContributedFunctions(name, NoLookupLocation.FROM_SYNTHETIC_SCOPE).mapNotNull {
-                if (it.dispatchReceiverParameter == null) return@mapNotNull null
-                wrapFunction(it.original)?.substituteForReceiverType(it.dispatchReceiverParameter!!.type) as? SimpleFunctionDescriptor
+                wrapFunction(it)
             }
 
     private fun wrapFunction(function: FunctionDescriptor): FunctionDescriptor? {
@@ -104,7 +103,6 @@ private class SamAdapterFunctionsScope(
                 descriptor.baseDescriptorForSynthetic = sourceFunction
 
                 val sourceTypeParams = (sourceFunction.typeParameters).toMutableList()
-                val ownerClass = sourceFunction.containingDeclaration as ClassDescriptor
 
                 val typeParameters = ArrayList<TypeParameterDescriptor>(sourceTypeParams.size)
                 val typeSubstitutor = DescriptorSubstitutor.substituteTypeParameters(sourceTypeParams, TypeSubstitution.EMPTY, descriptor, typeParameters)
@@ -115,7 +113,7 @@ private class SamAdapterFunctionsScope(
 
                 val visibility = syntheticVisibility(sourceFunction, isUsedForExtension = false)
 
-                descriptor.initialize(null, ownerClass.thisAsReceiverParameter, typeParameters, valueParameters, returnType,
+                descriptor.initialize(null, sourceFunction.dispatchReceiverParameter, typeParameters, valueParameters, returnType,
                                       Modality.FINAL, visibility)
 
                 descriptor.isOperator = sourceFunction.isOperator

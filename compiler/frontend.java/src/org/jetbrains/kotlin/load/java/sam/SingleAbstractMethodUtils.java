@@ -328,6 +328,13 @@ public class SingleAbstractMethodUtils {
         List<ValueParameterDescriptor> valueParameters = new ArrayList<>(originalValueParameters.size());
         for (ValueParameterDescriptor originalParam : originalValueParameters) {
             KotlinType originalType = originalParam.getType();
+            KotlinType originalOriginalType = original.getOriginal().getValueParameters().get(originalParam.getIndex()).getType();
+            TypeProjection projection =
+                    substitutor.getSubstitution().get(original.getOriginal().getValueParameters().get(originalParam.getIndex()).getType());
+            if (TypeUtils.isTypeParameter(originalOriginalType) && projection == null) {
+                valueParameters.add(originalParam);
+                continue;
+            }
             KotlinType functionType = getFunctionTypeForSamType(originalType, samResolver);
             KotlinType newTypeUnsubstituted = functionType != null ? functionType : originalType;
             KotlinType newType = substitutor.substitute(newTypeUnsubstituted, Variance.IN_VARIANCE);
