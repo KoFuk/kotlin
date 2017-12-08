@@ -147,6 +147,13 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
     }
 }
 
+open class KotlinPlatformAndroidPlugin : KotlinPlatformImplementationPluginBase("android") {
+    override fun apply(project: Project) {
+        project.applyPlugin<KotlinAndroidPluginWrapper>()
+        super.apply(project)
+    }
+}
+
 open class KotlinPlatformJvmPlugin : KotlinPlatformImplementationPluginBase("jvm") {
     override fun apply(project: Project) {
         project.applyPlugin<KotlinPluginWrapper>()
